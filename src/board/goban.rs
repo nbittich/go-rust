@@ -37,13 +37,15 @@ impl Board {
     }
     fn change_cell(&mut self, point: &Point, cell: Cell) {
         let board = &mut self.board;
-        match board.get(point) {
-            Some(Cell::Empty) => {
-                board.remove(point);
-                board.insert(Point(point.0, point.1), cell);
+        if let Some(c) = board.get_mut(point) {
+            match c {
+                Cell::Empty => {
+                    *c = cell;
+                }
+                Cell::Stone(_) => panic!("There's already a stone here"),
             }
-            Some(Cell::Stone(_)) => panic!("There's already a stone here"),
-            None => panic!("You cannot play here"),
+        } else {
+            panic!("You cannot play here");
         }
     }
 }
