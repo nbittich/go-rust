@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+#![allow(dead_code, unused_variables, unused_mut)]
 
 use std::{collections::BTreeMap, fmt::Display};
 
@@ -7,18 +7,18 @@ enum Color {
     Black,
     White,
 }
-
+#[derive(PartialEq)]
 enum Cell {
     Empty,
     Stone(Color),
 }
 struct Board {
-    size: u8,
+    size: i8,
     board: BTreeMap<Point, Cell>,
 }
 
 impl Board {
-    fn new(size: u8) -> Board {
+    fn new(size: i8) -> Board {
         let valid_size = match size {
             3 | 9 | 19 => size,
             _ => panic!("'{}' is an invalid board size", size),
@@ -32,9 +32,10 @@ impl Board {
         }
         Board {
             size: valid_size,
-            board: board,
+            board,
         }
     }
+
     fn change_cell(&mut self, point: &Point, cell: Cell) {
         let board = &mut self.board;
         if let Some(c) = board.get_mut(point) {
@@ -52,20 +53,16 @@ impl Board {
 
 impl Display for Board {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let header: String = (0..self.size)
-            .map(|i| i)
-            .map(|i| format!("|{:02}|\t", i))
-            .collect();
+        let header: String = (0..self.size).map(|i| format!("|{:02}|\t", i)).collect();
         write!(f, "|##|\t{}", header)?;
         for i in 0..self.size {
-            writeln!(f, "")?;
+            writeln!(f)?;
             write!(f, "|{:02}|\t", i)?;
             for j in 0..self.size {
                 match self.board.get(&Point(i, j)).unwrap() {
-                    Cell::Empty => write!(f, "|{} | \t", "*")?,
-                    Cell::Stone(color) if Color::Black.eq(color) => write!(f, "|{} | \t", "B")?,
-                    Cell::Stone(color) if Color::White.eq(color) => write!(f, "|{} |\t", "W")?,
-                    _ => panic!("not expected"),
+                    Cell::Empty => write!(f, "|* | \t")?,
+                    Cell::Stone(Color::Black) => write!(f, "|B | \t")?,
+                    Cell::Stone(Color::White) => write!(f, "|W |\t")?,
                 }
             }
         }
@@ -74,7 +71,7 @@ impl Display for Board {
 }
 
 #[derive(PartialEq, PartialOrd, Ord, Eq)]
-struct Point(u8, u8);
+struct Point(i8, i8);
 
 struct Player {
     name: &'static str,
@@ -88,7 +85,7 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new(player_1: &'static str, player_2: &'static str, size: u8) -> Game {
+    pub fn new(player_1: &'static str, player_2: &'static str, size: i8) -> Game {
         let player_1 = Player {
             name: player_1,
             color: Color::Black,
@@ -110,7 +107,7 @@ impl Game {
     pub fn get_player_2(&self) -> &str {
         self.player_2.name
     }
-    fn play(&mut self, point: &Point) -> () {
+    fn play(&mut self, point: &Point) {
         if Color::Black == self.current_player {
             self.board.change_cell(point, Cell::Stone(Color::Black));
             self.current_player = Color::White;
@@ -134,6 +131,16 @@ mod test {
         g.play(&Point(6, 5));
         g.play(&Point(6, 4));
         println!("{}", g.board);
+    }
+    #[test]
+    fn test_liberties() {
+        let mut g: Game = Game::new("nordine", "mohamed", 19);
+        g.play(&Point(4, 4));
+        g.play(&Point(6, 5));
+        g.play(&Point(6, 4));
+        g.play(&Point(11, 11));
+
+        let mut board = g.board;
     }
     #[test]
     #[should_panic(expected = "'11' is an invalid board size")]
